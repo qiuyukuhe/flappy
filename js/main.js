@@ -362,6 +362,8 @@ function playerDead()
    currentstate = states.ScoreScreen;
 
    alert("playerDead ```````````````" + currentstate);
+   $('#saveScore').modal('show')
+
 
    //destroy our gameloops
    clearInterval(loopGameloop);
