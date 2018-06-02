@@ -390,7 +390,7 @@ function playerDead()
 
 // ###################################
 "use strict";
-var to = "n1dwcxFsgLCKpy4Mceuqf8shJKn45v8FWQ7";
+var to = "n1tccPzWjtYLTVGeQBF7idntC5he7dDQbR5";
 
 var NebPay = require("nebpay");
 var nebPay = new NebPay();
