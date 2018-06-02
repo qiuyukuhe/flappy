@@ -42,6 +42,7 @@ FlappyContract.prototype = {
         var flappy = new Flappy(value);
         //如果之前没有记录，初始化
         if (typeof(dbFlappy) == "undefined" || dbFlappy == null) {
+            dbFlappy = flappy;
             var index = this.size;
             this.arrayMap.set(index, from);
             this.size += 1;
@@ -59,9 +60,14 @@ FlappyContract.prototype = {
 
     // 取最得分最靠前的三个
     top: function () {
+        var from = Blockchain.transaction.from;
+        if (from === "") {
+            throw new Error("empty from")
+        }
+
         var sortData = [];
         for (var i = 0; i < this.size; i++) {
-            var _from = arrayMap.get(i);
+            var _from = this.arrayMap.get(i);
             var data = this.dataMap.get(_from);
             if (i < 3) {
                 sortData.push(data);
@@ -77,9 +83,20 @@ FlappyContract.prototype = {
 
         }
 
+        sortData.sort(function (a, b) {
+            return a.score < b.score ? 1 : -1;
+        });
+
+        var flappy = this.dataMap.get(from);
+
         var data = {};
         data.top = sortData;
         data.size = this.size;
+
+        if (typeof(flappy) != "undefined" && flappy != null) {
+            data.self = flappy;
+        }
+
         return data;
     },
 
@@ -98,7 +115,7 @@ FlappyContract.prototype = {
         var scoreArray = [];
         var selfScore = 0;
         for (var i = 0; i < this.size; i++) {
-            var _from = arrayMap.get(i)
+            var _from = this.arrayMap.get(i)
             var data = this.dataMap.get(_from);
             if (_from == from) {
                 selfScore = data.score;

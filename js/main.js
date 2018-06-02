@@ -15,6 +15,9 @@
    limitations under the License.
 */
 
+
+var blockFlag = false;
+
 var debugmode = false;
 
 var states = Object.freeze({
@@ -361,10 +364,6 @@ function playerDead()
    //it's time to change states. as of now we're considered ScoreScreen to disable left click/flying
    currentstate = states.ScoreScreen;
 
-   alert("playerDead ```````````````" + currentstate);
-   $('#saveScore').modal('show')
-
-
    //destroy our gameloops
    clearInterval(loopGameloop);
    clearInterval(loopPipeloop);
@@ -388,6 +387,90 @@ function playerDead()
    }
 }
 
+
+// ###################################
+"use strict";
+var to = "n1dwcxFsgLCKpy4Mceuqf8shJKn45v8FWQ7";
+
+var NebPay = require("nebpay");
+var nebPay = new NebPay();
+var serialNumber;
+
+
+function initScore(resp) {
+    var dataMap;
+    console.log(resp)
+    if (resp.result == 'null' || resp.result == '{}' || typeof(resp.result) == "undefined") {
+        dataMap = {};
+    }
+    else {
+        dataMap = eval(JSON.parse(resp.result));
+    }
+
+    var topArray =  dataMap.top;
+    var selfScore = dataMap.self;
+    
+    if (topArray.length == 0){
+
+    }else {
+       for (var i = 0; i < topArray.length; i++){
+            $('#rank-div').append('<h2 style="font-size: 2.5em">第' + (i + 1) + '名：' + topArray[i].username +', 得分：' + topArray[i].score + '</h2>');
+        }
+        $('#rank-div').show();
+    }
+    if (typeof(selfScore) != "undefined" && selfScore != null) {
+         $('#u-name').html(selfScore.username);
+        $('#slef-score').html(selfScore.score);
+        $('#user-div').show();
+        highscore = selfScore.score;
+        setCookie("highscore", selfScore.score, 999);
+    }
+
+    blockFlag = true;
+}
+
+$(function () {
+    var value = "0";
+    var callFunction = "top";
+    var callArgs = "";
+
+    serialNumber = nebPay.simulateCall(to, value, callFunction, callArgs, {    //使用nebpay的call接口去调用合约,
+        listener: initScore        //设置listener, 处理交易返回信息
+    });
+});
+
+$("#push").click(function () {
+    var value = "0";
+    var callFunction = "save";
+
+    var data = {
+        username: $("#user-name").val(),
+        score:highscore
+    };
+
+    if(data.username == '' || data.username.trim() == ''){
+        alert("请输入名称！");
+        return false;
+    }
+
+    var callArgs = [];
+    callArgs.push(JSON.stringify(data));
+
+    console.log(JSON.stringify(callArgs));
+    serialNumber = nebPay.call(to, value, callFunction, JSON.stringify(callArgs), {
+        listener: cbPush
+    });
+    $('#saveScore').modal('hide');
+    return false;
+});
+
+function cbPush(resp) {
+
+    //save it!
+    setCookie("highscore", highscore, 999);
+    console.log("response of push: " + JSON.stringify(resp))
+}
+
 function showScore()
 {
    //unhide us
@@ -398,13 +481,15 @@ function showScore()
 
    
    //have they beaten their high score?
-   if(score > highscore)
-   {
-      //yeah!
-      highscore = score;
-      alert("历史最高成绩:" + score);
-      //save it!
-      setCookie("highscore", highscore, 999);
+   if(score > highscore && blockFlag) {
+
+       //yeah!
+       highscore = score;
+
+       $('#thisScore').html(highscore);
+
+       //TODO
+       $('#saveScore').modal('show');
    }
    
    //update the scoreboard
